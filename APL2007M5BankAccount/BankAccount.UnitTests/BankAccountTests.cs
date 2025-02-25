@@ -3,8 +3,14 @@ using System;
 
 namespace BankAccountUnitTests
 {
+    private readonly BankAccount _account;
+    public BankAccountTests()
+    {
+        _account = new BankAccount("123456", 1000.0, "Igr Bltra", "Savings", DateTime.Now);
+    }
     public class BankAccountTests
     {
+        // Credit tests
         [Fact]
         public void Credit_WithPositiveAmount_UpdatesBalance()
         {
@@ -28,6 +34,43 @@ namespace BankAccountUnitTests
             Assert.Equal(100, account.GetBalance());
         }
 
+        [Fact]
+        public void Credit_WithMaxDoubleValue_ShouldUpdateBalance()
+        {
+            var account = new BankAccount("12345", 100, "John Doe", "Savings", DateTime.Now);
+            account.Credit(double.MaxValue);
+            Assert.Equal(double.MaxValue + 100, account.GetBalance());
+        }
+
+        [Fact]
+        public void Credit_WithMinDoubleValue_ShouldThrowException()
+        {
+            var account = new BankAccount("12345", 100, "John Doe", "Savings", DateTime.Now);
+            Assert.Throws<ArgumentException>(() => account.Credit(double.MinValue));
+        }
+
+        [Fact]
+        public void Credit_WithNaN_ShouldThrowException()
+        {
+            var account = new BankAccount("12345", 100, "John Doe", "Savings", DateTime.Now);
+            Assert.Throws<ArgumentException>(() => account.Credit(double.NaN));
+        }
+
+        [Fact]
+        public void Credit_WithPositiveInfinity_ShouldThrowException()
+        {
+            var account = new BankAccount("12345", 100, "John Doe", "Savings", DateTime.Now);
+            Assert.Throws<ArgumentException>(() => account.Credit(double.PositiveInfinity));
+        }
+
+        [Fact]
+        public void Credit_WithNegativeInfinity_ShouldThrowException()
+        {
+            var account = new BankAccount("12345", 100, "John Doe", "Savings", DateTime.Now);
+            Assert.Throws<ArgumentException>(() => account.Credit(double.NegativeInfinity));
+        }
+
+        // Debit tests
         [Fact]
         public void Debit_WithSufficientBalance_ReducesBalance()
         {
@@ -58,6 +101,42 @@ namespace BankAccountUnitTests
             Assert.Equal(100, account.GetBalance());
         }
 
+        [Fact]
+        public void Debit_WithMaxDoubleValue_ShouldThrowException()
+        {
+            var account = new BankAccount("12345", 100, "John Doe", "Savings", DateTime.Now);
+            Assert.Throws<Exception>(() => account.Debit(double.MaxValue));
+        }
+
+        [Fact]
+        public void Debit_WithMinDoubleValue_ShouldThrowException()
+        {
+            var account = new BankAccount("12345", 100, "John Doe", "Savings", DateTime.Now);
+            Assert.Throws<ArgumentException>(() => account.Debit(double.MinValue));
+        }
+
+        [Fact]
+        public void Debit_WithNaN_ShouldThrowException()
+        {
+            var account = new BankAccount("12345", 100, "John Doe", "Savings", DateTime.Now);
+            Assert.Throws<ArgumentException>(() => account.Debit(double.NaN));
+        }
+
+        [Fact]
+        public void Debit_WithPositiveInfinity_ShouldThrowException()
+        {
+            var account = new BankAccount("12345", 100, "John Doe", "Savings", DateTime.Now);
+            Assert.Throws<ArgumentException>(() => account.Debit(double.PositiveInfinity));
+        }
+
+        [Fact]
+        public void Debit_WithNegativeInfinity_ShouldThrowException()
+        {
+            var account = new BankAccount("12345", 100, "John Doe", "Savings", DateTime.Now);
+            Assert.Throws<ArgumentException>(() => account.Debit(double.NegativeInfinity));
+        }
+
+        // Transfer tests
         [Fact]
         public void Transfer_WithSufficientBalance_ShouldDecreaseSourceAndIncreaseTargetBalance()
         {
@@ -108,6 +187,47 @@ namespace BankAccountUnitTests
             Assert.Throws<ArgumentNullException>(() => account.Transfer(null, 50));
         }
 
+        [Fact]
+        public void Transfer_WithMaxDoubleValue_ShouldThrowException()
+        {
+            var sourceAccount = new BankAccount("12345", 100, "John Doe", "Savings", DateTime.Now);
+            var targetAccount = new BankAccount("67890", 100, "Jane Doe", "Savings", DateTime.Now);
+            Assert.Throws<Exception>(() => sourceAccount.Transfer(targetAccount, double.MaxValue));
+        }
+
+        [Fact]
+        public void Transfer_WithMinDoubleValue_ShouldThrowException()
+        {
+            var sourceAccount = new BankAccount("12345", 100, "John Doe", "Savings", DateTime.Now);
+            var targetAccount = new BankAccount("67890", 100, "Jane Doe", "Savings", DateTime.Now);
+            Assert.Throws<ArgumentException>(() => sourceAccount.Transfer(targetAccount, double.MinValue));
+        }
+
+        [Fact]
+        public void Transfer_WithNaN_ShouldThrowException()
+        {
+            var sourceAccount = new BankAccount("12345", 100, "John Doe", "Savings", DateTime.Now);
+            var targetAccount = new BankAccount("67890", 100, "Jane Doe", "Savings", DateTime.Now);
+            Assert.Throws<ArgumentException>(() => sourceAccount.Transfer(targetAccount, double.NaN));
+        }
+
+        [Fact]
+        public void Transfer_WithPositiveInfinity_ShouldThrowException()
+        {
+            var sourceAccount = new BankAccount("12345", 100, "John Doe", "Savings", DateTime.Now);
+            var targetAccount = new BankAccount("67890", 100, "Jane Doe", "Savings", DateTime.Now);
+            Assert.Throws<ArgumentException>(() => sourceAccount.Transfer(targetAccount, double.PositiveInfinity));
+        }
+
+        [Fact]
+        public void Transfer_WithNegativeInfinity_ShouldThrowException()
+        {
+            var sourceAccount = new BankAccount("12345", 100, "John Doe", "Savings", DateTime.Now);
+            var targetAccount = new BankAccount("67890", 100, "Jane Doe", "Savings", DateTime.Now);
+            Assert.Throws<ArgumentException>(() => sourceAccount.Transfer(targetAccount, double.NegativeInfinity));
+        }
+
+        // CalculateInterest tests
         [Fact]
         public void CalculateInterest_ShouldReturnCorrectAmount()
         {
