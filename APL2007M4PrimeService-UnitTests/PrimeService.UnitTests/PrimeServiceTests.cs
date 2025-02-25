@@ -1,49 +1,137 @@
-﻿namespace System.Numbers.UnitTests;
-
-public class PrimeServiceTests
+﻿namespace System.Number.UnitTests
 {
-    private readonly PrimeService _primeService;
-
-    public PrimeServiceTests()
-    {
-        _primeService = new PrimeService();
-    }
-    
+public class PrimeServiceTest{
     [Fact]
     public void IsPrime_InputIs1_ReturnFalse()
     {
-        var result = _primeService.IsPrime(1);
+        // Arrange
+        var primeService = new PrimeService();
+
+        // Act
+        var result = primeService.IsPrime(1);
+
+        // Assert
         Assert.False(result, "1 should not be prime");
+    }
+}
+namespace System.Number.UnitTests;
+public class PrimeServiceTest
+{
+    [Fact]
+    public void IsPrime_InputIs1_ReturnFalse()
+    {
+        // Arrange
+        var primeService = new PrimeService();
+
+        // Act
+        var result = primeService.IsPrime(1);
+
+        // Assert
+        Assert.False(result, "1 should not be prime");
+    }
+
+    [Fact]
+    public void IsPrime_InputIsNegative_ReturnFalse()
+    {
+        // Arrange
+        var primeService = new PrimeService();
+
+        // Act
+        var result = primeService.IsPrime(-5);
+
+        // Assert
+        Assert.False(result, "-5 should not be prime");
+    }
+
+    [Fact]
+    public void IsPrime_InputIs0_ReturnFalse()
+    {
+        // Arrange
+        var primeService = new PrimeService();
+
+        // Act
+        var result = primeService.IsPrime(0);
+
+        // Assert
+        Assert.False(result, "0 should not be prime");
     }
 
     [Fact]
     public void IsPrime_InputIs2_ReturnTrue()
     {
-        var result = _primeService.IsPrime(2);
+        // Arrange
+        var primeService = new PrimeService();
+
+        // Act
+        var result = primeService.IsPrime(2);
+
+        // Assert
         Assert.True(result, "2 should be prime");
     }
 
     [Fact]
-    public void IsPrime_InputIs3_ReturnTrue()
+    public void IsPrime_InputIsEvenNumberGreaterThan2_ReturnFalse()
     {
-        var result = _primeService.IsPrime(3);
-        Assert.True(result, "3 should be prime");
+        // Arrange
+        var primeService = new PrimeService();
+
+        // Act
+        var result = primeService.IsPrime(4);
+
+        // Assert
+        Assert.False(result, "4 should not be prime");
     }
 
     [Fact]
-    public void IsPrime_InputIs4_ReturnFalse()
+    public void IsPrime_InputIsOddPrimeNumber_ReturnTrue()
     {
-        var result = _primeService.IsPrime(4);
-        Assert.False(result, "4 should not be prime");
+        // Arrange
+        var primeService = new PrimeService();
+
+        // Act
+        var result = primeService.IsPrime(5);
+
+        // Assert
+        Assert.True(result, "5 should be prime");
     }
-    
-    [Theory]
-    [InlineData(-1)]
-    [InlineData(0)]
-    [InlineData(1)]
-    public void IsPrime_NegativeNumbersAndZero_ReturnFalse(int value)
+
+    [Fact]
+    public void IsPrime_InputIsOddNonPrimeNumber_ReturnFalse()
     {
-        var result = _primeService.IsPrime(value);
-        Assert.False(result, $"{value} should not be prime");
+        // Arrange
+        var primeService = new PrimeService();
+
+        // Act
+        var result = primeService.IsPrime(9);
+
+        // Assert
+        Assert.False(result, "9 should not be prime");
     }
+
+    [Fact]
+    public void IsPrime_InputIsLargePrimeNumber_ReturnTrue()
+    {
+        // Arrange
+        var primeService = new PrimeService();
+
+        // Act
+        var result = primeService.IsPrime(7919);
+
+        // Assert
+        Assert.True(result, "7919 should be prime");
+    }
+
+    [Fact]
+    public void IsPrime_InputIsLargeNonPrimeNumber_ReturnFalse()
+    {
+        // Arrange
+        var primeService = new PrimeService();
+
+        // Act
+        var result = primeService.IsPrime(8000);
+
+        // Assert
+        Assert.False(result, "8000 should not be prime");
+    }
+}
 }
