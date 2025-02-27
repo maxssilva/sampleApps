@@ -1,31 +1,44 @@
-﻿using System;
-
-namespace BankAccountApp
+﻿public class BankAccount
 {
-    public class BankAccount
+    public string AccountNumber { get; }
+    public double Balance { get; private set; }
+    public string AccountHolderName { get; }
+    public string AccountType { get; }
+    public DateTime DateOpened { get; }
+
+    public BankAccount(string accountNumber, double initialBalance, string accountHolderName, string accountType, DateTime dateOpened)
     {
-        public string AccountNumber { get; }
-        public double Balance { get; private set; }
-        public string AccountHolderName { get; }
-        public string AccountType { get; }
-        public DateTime DateOpened { get; }
+        AccountNumber = accountNumber;
+        Balance = initialBalance;
+        AccountHolderName = accountHolderName;
+        AccountType = accountType;
+        DateOpened = dateOpened;
+    }
 
-        public BankAccount(string accountNumber, double initialBalance, string accountHolderName, string accountType, DateTime dateOpened)
+    public void Credit(double amount)
+    {
+        try
         {
-            AccountNumber = accountNumber;
-            Balance = initialBalance;
-            AccountHolderName = accountHolderName;
-            AccountType = accountType;
-            DateOpened = dateOpened;
-        }
-
-        public void Credit(double amount)
-        {
+            if (amount <= 0)
+            {
+                throw new ArgumentException("Amount to credit must be positive.");
+            }
             Balance += amount;
         }
-
-        public void Debit(double amount)
+        catch (ArgumentException ex)
         {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+    }
+
+    public void Debit(double amount)
+    {
+        try
+        {
+            if (amount <= 0)
+            {
+                throw new ArgumentException("Amount to debit must be positive.");
+            }
 
             if (Balance >= amount)
             {
@@ -33,22 +46,38 @@ namespace BankAccountApp
             }
             else
             {
-                throw new Exception("Insufficient balance for debit.");
+                throw new InvalidOperationException("Insufficient balance for debit.");
             }
         }
-
-        public double GetBalance()
+        catch (ArgumentException ex)
         {
-            return Balance; // Math.Round(balance, 2);
+            Console.WriteLine($"Error: {ex.Message}");
         }
-
-        public void Transfer(BankAccount toAccount, double amount)
+        catch (InvalidOperationException ex)
         {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+    }
+
+    public double GetBalance()
+    {
+        return Balance; // Math.Round(balance, 2);
+    }
+
+    public void Transfer(BankAccount toAccount, double amount)
+    {
+        try
+        {
+            if (amount <= 0)
+            {
+                throw new ArgumentException("Amount to transfer must be positive.");
+            }
+
             if (Balance >= amount)
             {
                 if (AccountHolderName != toAccount.AccountHolderName && amount > 500)
                 {
-                    throw new Exception("Transfer amount exceeds maximum limit for different account owners.");
+                    throw new InvalidOperationException("Transfer amount exceeds maximum limit for different account owners.");
                 }
 
                 Debit(amount);
@@ -56,19 +85,39 @@ namespace BankAccountApp
             }
             else
             {
-                throw new Exception("Insufficient balance for transfer.");
+                throw new InvalidOperationException("Insufficient balance for transfer.");
             }
         }
-
-        public void PrintStatement()
+        catch (ArgumentException ex)
         {
-            Console.WriteLine($"Account Number: {AccountNumber}, Balance: {Balance}");
-            // Add code here to print recent transactions
+            Console.WriteLine($"Error: {ex.Message}");
         }
-
-        public double CalculateInterest(double interestRate)
+        catch (InvalidOperationException ex)
         {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+    }
+
+    public void PrintStatement()
+    {
+        Console.WriteLine($"Account Number: {AccountNumber}, Balance: {Balance}");
+        // Add code here to print recent transactions
+    }
+
+    public double CalculateInterest(double interestRate)
+    {
+        try
+        {
+            if (interestRate < 0)
+            {
+                throw new ArgumentException("Interest rate must be non-negative.");
+            }
             return Balance * interestRate;
+        }
+        catch (ArgumentException ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+            return 0;
         }
     }
 }

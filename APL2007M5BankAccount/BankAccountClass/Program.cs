@@ -1,8 +1,12 @@
-﻿namespace BankAccountApp
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+namespace BankAccountApp
 {
     class Program
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
             List<BankAccount> accounts = new List<BankAccount>();
 
@@ -28,91 +32,72 @@
             }
 
             // Simulate 100 transactions for each account
+            List<Task> transactionTasks = new List<Task>();
             foreach (BankAccount account in accounts)
             {
-                for (int i = 0; i < 100; i++)
-                {
-                    double transactionAmount = GenerateRandomBalance(-500, 500);
-                    try
-                    {
-                        if (transactionAmount >= 0)
-                        {
-                            account.Credit(transactionAmount);
-                            Console.WriteLine($"Credit: {transactionAmount}, Balance: {account.Balance.ToString("C")}, Account Holder: {account.AccountHolderName}, Account Type: {account.AccountType}");
-                        }
-                        else
-                        {
-                            account.Debit(-transactionAmount);
-                            Console.WriteLine($"Debit: {transactionAmount}, Balance: {account.Balance.ToString("C")}, Account Holder: {account.AccountHolderName}, Account Type: {account.AccountType}");
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"Transaction failed: {ex.Message}");
-                    }
-                }
-
-                Console.WriteLine($"Account: {account.AccountNumber}, Balance: {account.Balance.ToString("C")}, Account Holder: {account.AccountHolderName}, Account Type: {account.AccountType}");
+                transactionTasks.Add(Task.Run(() => SimulateTransactions(account, 100)));
             }
 
-            // Simulate transfers between accounts
-            foreach (BankAccount fromAccount in accounts)
+            await Task.WhenAll(transactionTasks);
+
+            // Display account details
+            foreach (BankAccount account in accounts)
             {
-                foreach (BankAccount toAccount in accounts)
-                {
-                    if (fromAccount != toAccount)
-                    {
-                        try
-                        {
-                            double transferAmount = GenerateRandomBalance(0, fromAccount.Balance);
-                            fromAccount.Transfer(toAccount, transferAmount);
-                            Console.WriteLine($"Transfer: {transferAmount.ToString("C")} from {fromAccount.AccountNumber} ({fromAccount.AccountHolderName}, {fromAccount.AccountType}) to {toAccount.AccountNumber} ({toAccount.AccountHolderName}, {toAccount.AccountType})");
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($"Transfer failed: {ex.Message}"); 
-                        }
-                    }
-                }
+                Console.WriteLine($"Account Number: {account.AccountNumber}, Balance: {account.Balance:C}, Holder: {account.AccountHolderName}, Type: {account.AccountType}, Opened: {account.DateOpened.ToShortDateString()}");
             }
         }
 
         static double GenerateRandomBalance(double min, double max)
         {
             Random random = new Random();
-            double balance = random.NextDouble() * (max - min) + min;
-            return Math.Round(balance, 2);
+            return random.NextDouble() * (max - min) + min;
         }
 
         static string GenerateRandomAccountHolder()
         {
-            string[] accountHolderNames = { "John Smith", "Maria Garcia", "Mohammed Khan", "Sophie Dubois", "Liam Johnson", "Emma Martinez", "Noah Lee", "Olivia Kim", "William Chen", "Ava Wang", "James Brown", "Isabella Nguyen", "Benjamin Wilson", "Mia Li", "Lucas Anderson", "Charlotte Liu", "Alexander Taylor", "Amelia Patel", "Daniel Garcia", "Sophia Kim" };
-
+            string[] names = { "John Doe", "Jane Smith", "Alice Johnson", "Bob Brown", "Charlie Davis" };
             Random random = new Random();
-            string accountHolderName = accountHolderNames[random.Next(0, accountHolderNames.Length)];
-            return accountHolderName;
+            return names[random.Next(names.Length)];
         }
 
         static string GenerateRandomAccountType()
         {
-            string[] accountTypes = { "Savings", "Checking", "Money Market", "Certificate of Deposit", "Retirement" };
+            string[] types = { "Savings", "Checking", "Business" };
             Random random = new Random();
-            return accountTypes[random.Next(0, accountTypes.Length)];
+            return types[random.Next(types.Length)];
         }
 
         static DateTime GenerateRandomDateOpened()
         {
             Random random = new Random();
-            DateTime startDate = new DateTime(DateTime.Today.Year - 10, 1, 1);
-            int range = (DateTime.Today - startDate).Days;
-            DateTime randomDate = startDate.AddDays(random.Next(range));
+            int year = random.Next(2000, DateTime.Now.Year + 1);
+            int month = random.Next(1, 13);
+            int day = random.Next(1, DateTime.DaysInMonth(year, month) + 1);
+            return new DateTime(year, month, day);
+        }
 
-            if (randomDate.Year == DateTime.Today.Year && randomDate >= DateTime.Today)
+        static void SimulateTransactions(BankAccount account, int numberOfTransactions)
+        {
+            Random random = new Random();
+            for (int i = 0; i < numberOfTransactions; i++)
             {
-                randomDate = randomDate.AddDays(-1);
+                try
+                {
+                    double amount = random.NextDouble() * 1000;
+                    if (random.Next(2) == 0)
+                    {
+                        account.Credit(amount);
+                    }
+                    else
+                    {
+                        account.Debit(amount);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Transaction failed for account {account.AccountNumber}: {ex.Message}");
+                }
             }
-
-            return randomDate;
         }
     }
 }

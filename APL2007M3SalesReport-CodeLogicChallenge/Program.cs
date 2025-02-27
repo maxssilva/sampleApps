@@ -70,9 +70,29 @@
         }
 
         public void QuarterlySalesReport(SalesData[] salesData)
-        {
+        {s
+            int indexOfDept = Array.IndexOf(ProdDepartments.departmentNames, salesData[i].departmentName);
+            string deptAbb = ProdDepartments.departmentAbbreviations[indexOfDept];
+            string firstDigit = (indexOfDept + 1).ToString();
+            string nextTwoDigits = random.Next(1, 100).ToString("D2");
+            string sizeCode = new string[] { "XS", "S", "M", "L", "XL" }[random.Next(0, 5)];
+            string colorCode = new string[] { "BK", "BL", "GR", "RD", "YL", "OR", "WT", "GY" }[random.Next(0, 8)];
+            string manufacturingSite = ManufacturingSites.manufacturingSites[random.Next(0, ManufacturingSites.manufacturingSites.Length)];
+
+            salesData[i].productID = $"{deptAbb}-{firstDigit}{nextTwoDigits}-{sizeCode}-{colorCode}-{manufacturingSite}";
+
             // create a dictionary to store the quarterly sales data
-            Dictionary<string, Dictionary<string, (int unitsSold, double totalSales, double avgUnitCost, double totalProfit, double avgProfitPercentage)>> quarterlyProductSales = new Dictionary<string, Dictionary<string, (int, double, double, double, double)>>();
+            Dictionary<string, double> quarterlySales = new Dictionary<string, double>();
+            Dictionary<string, double> quarterlyProfit = new Dictionary<string, double>();
+            Dictionary<string, double> quarterlyProfitPercentage = new Dictionary<string, double>();
+
+            // create a dictionary to store the quarterly sales data by department
+            Dictionary<string, Dictionary<string, double>> quarterlySalesByDepartment = new Dictionary<string, Dictionary<string, double>>();
+            Dictionary<string, Dictionary<string, double>> quarterlyProfitByDepartment = new Dictionary<string, Dictionary<string, double>>();
+            Dictionary<string, Dictionary<string, double>> quarterlyProfitPercentageByDepartment = new Dictionary<string, Dictionary<string, double>>();
+
+            // create a dictionary to store the top 3 sales orders by quarter
+            Dictionary<string, List<SalesData>> top3SalesOrdersByQuarter = new Dictionary<string, List<SalesData>>();
 
             // iterate through the sales data
             foreach (SalesData data in salesData)
@@ -84,32 +104,63 @@
             double profit = totalSales - totalCost;
             double profitPercentage = (profit / totalSales) * 100;
 
-            // deconstruct the product ID to get the serial number
-            string[,] productDetails = DeconstructProductId(data.productID);
-            string productSerialNumber = $"{productDetails[0, 1]}-{productDetails[1, 1]}-ss-cc-mmm";
-
-            // initialize the dictionary for the quarter if it doesn't exist
-            if (!quarterlyProductSales.ContainsKey(quarter))
+            // calculate the total sales, profit, and profit percentage by department
+            if (!quarterlySalesByDepartment.ContainsKey(quarter))
             {
-                quarterlyProductSales[quarter] = new Dictionary<string, (int, double, double, double, double)>();
+                quarterlySalesByDepartment.Add(quarter, new Dictionary<string, double>());
+                quarterlyProfitByDepartment.Add(quarter, new Dictionary<string, double>());
+                quarterlyProfitPercentageByDepartment.Add(quarter, new Dictionary<string, double>());
             }
 
-            // update the product sales data
-            if (quarterlyProductSales[quarter].ContainsKey(productSerialNumber))
+            if (quarterlySalesByDepartment[quarter].ContainsKey(data.departmentName))
             {
-                var currentData = quarterlyProductSales[quarter][productSerialNumber];
-                int newUnitsSold = currentData.unitsSold + data.quantitySold;
-                double newTotalSales = currentData.totalSales + totalSales;
-                double newTotalProfit = currentData.totalProfit + profit;
-                double newAvgUnitCost = (currentData.avgUnitCost * currentData.unitsSold + data.unitPrice * data.quantitySold) / newUnitsSold;
-                double newAvgProfitPercentage = (currentData.avgProfitPercentage * currentData.unitsSold + profitPercentage * data.quantitySold) / newUnitsSold;
-
-                quarterlyProductSales[quarter][productSerialNumber] = (newUnitsSold, newTotalSales, newAvgUnitCost, newTotalProfit, newAvgProfitPercentage);
+                quarterlySalesByDepartment[quarter][data.departmentName] += totalSales;
+                quarterlyProfitByDepartment[quarter][data.departmentName] += profit;
             }
             else
             {
-                quarterlyProductSales[quarter][productSerialNumber] = (data.quantitySold, totalSales, data.unitPrice, profit, profitPercentage);
+                quarterlySalesByDepartment[quarter].Add(data.departmentName, totalSales);
+                quarterlyProfitByDepartment[quarter].Add(data.departmentName, profit);
             }
+
+            if (!quarterlyProfitPercentageByDepartment[quarter].ContainsKey(data.departmentName))
+            {
+                quarterlyProfitPercentageByDepartment[quarter].Add(data.departmentName, profitPercentage);
+            }
+
+            // calculate the total sales and profit for each quarter
+            if (quarterlySales.ContainsKey(quarter))
+            {
+                quarterlySales[quarter] += totalSales;
+                quarterlyProfit[quarter] += profit;
+            }
+            else
+            {
+                quarterlySales.Add(quarter, totalSales);
+                quarterlyProfit.Add(quarter, profit);
+            }
+
+            if (!quarterlyProfitPercentage.ContainsKey(quarter))
+            {
+                quarterlyProfitPercentage.Add(quarter, profitPercentage);
+            }
+
+            // add the sales data to the top 3 sales orders by quarter
+            if (!top3SalesOrdersByQuarter.ContainsKey(quarter))
+            {
+                top3SalesOrdersByQuarter.Add(quarter, new List<SalesData>());
+            }
+
+            top3SalesOrdersByQuarter[quarter].Add(data);
+            }
+
+            // sort the top 3 sales orders by profit in descending order
+            foreach (var quarter in top3SalesOrdersByQuarter.Keys)
+            {
+            top3SalesOrdersByQuarter[quarter] = top3SalesOrdersByQuarter[quarter]
+                .OrderByDescending(order => (order.quantitySold * order.unitPrice) - (order.quantitySold * order.baseCost))
+                .Take(3)
+                .ToList();
             }
 
             // display the quarterly sales report
@@ -117,23 +168,54 @@
             Console.WriteLine("----------------------");
 
             // sort the quarterly sales by key (quarter)
-            var sortedQuarterlySales = quarterlyProductSales.OrderBy(q => q.Key);
+            var sortedQuarterlySales = quarterlySales.OrderBy(q => q.Key);
 
-            foreach (var quarter in sortedQuarterlySales)
+            foreach (KeyValuePair<string, double> quarter in sortedQuarterlySales)
             {
-            Console.WriteLine($"{quarter.Key}:");
+            // format the sales amount as currency using regional settings
+            string formattedSalesAmount = quarter.Value.ToString("C");
+            string formattedProfitAmount = quarterlyProfit[quarter.Key].ToString("C");
+            string formattedProfitPercentage = quarterlyProfitPercentage[quarter.Key].ToString("F2");
 
-            // sort the product sales data by total profit in descending order
-            var sortedProductSales = quarter.Value.OrderByDescending(p => p.Value.totalProfit).Take(3);
+            Console.WriteLine("{0}: Sales: {1}, Profit: {2}, Profit Percentage: {3}%", quarter.Key, formattedSalesAmount, formattedProfitAmount, formattedProfitPercentage);
+
+            // display the quarterly sales, profit, and profit percentage by department
+            Console.WriteLine("By Department:");
+            var sortedQuarterlySalesByDepartment = quarterlySalesByDepartment[quarter.Key].OrderBy(d => d.Key);
+
+            // Print table headers
+            Console.WriteLine("┌───────────────────────┬───────────────────┬───────────────────┬───────────────────┐");
+            Console.WriteLine("│      Department       │       Sales       │       Profit      │ Profit Percentage │");
+            Console.WriteLine("├───────────────────────┼───────────────────┼───────────────────┼───────────────────┤");
+
+            foreach (KeyValuePair<string, double> department in sortedQuarterlySalesByDepartment)
+            {
+                string formattedDepartmentSalesAmount = department.Value.ToString("C");
+                string formattedDepartmentProfitAmount = quarterlyProfitByDepartment[quarter.Key][department.Key].ToString("C");
+                string formattedDepartmentProfitPercentage = quarterlyProfitPercentageByDepartment[quarter.Key][department.Key].ToString("F2");
+
+                Console.WriteLine("│ {0,-22}│ {1,17} │ {2,17} │ {3,17} │", department.Key, formattedDepartmentSalesAmount, formattedDepartmentProfitAmount, formattedDepartmentProfitPercentage);
+            }
+
+            Console.WriteLine("└───────────────────────┴───────────────────┴───────────────────┴───────────────────┘");
+            Console.WriteLine();
+
+            // display the top 3 sales orders for the quarter
+            Console.WriteLine("Top 3 Sales Orders:");
+            var top3SalesOrders = top3SalesOrdersByQuarter[quarter.Key];
 
             // Print table headers
             Console.WriteLine("┌───────────────────────┬───────────────────┬───────────────────┬───────────────────┬───────────────────┬───────────────────┐");
-            Console.WriteLine("│  Product Serial No.   │   Units Sold      │   Total Sales     │ Avg. Unit Cost    │   Total Profit    │ Avg. Profit %     │");
+            Console.WriteLine("│      Product ID       │   Quantity Sold   │    Unit Price     │   Total Sales     │      Profit       │ Profit Percentage │");
             Console.WriteLine("├───────────────────────┼───────────────────┼───────────────────┼───────────────────┼───────────────────┼───────────────────┤");
 
-            foreach (var product in sortedProductSales)
+            foreach (SalesData salesOrder in top3SalesOrders)
             {
-                Console.WriteLine("│ {0,-22}│ {1,17} │ {2,17} │ {3,17} │ {4,17} │ {5,17} │", product.Key, product.Value.unitsSold, product.Value.totalSales.ToString("C"), product.Value.avgUnitCost.ToString("C"), product.Value.totalProfit.ToString("C"), product.Value.avgProfitPercentage.ToString("F2"));
+                double orderTotalSales = salesOrder.quantitySold * salesOrder.unitPrice;
+                double orderProfit = orderTotalSales - (salesOrder.quantitySold * salesOrder.baseCost);
+                double orderProfitPercentage = (orderProfit / orderTotalSales) * 100;
+
+                Console.WriteLine("│ {0,-22}│ {1,17} │ {2,17} │ {3,17} │ {4,17} │ {5,17} │", salesOrder.productID, salesOrder.quantitySold, salesOrder.unitPrice.ToString("C"), orderTotalSales.ToString("C"), orderProfit.ToString("C"), orderProfitPercentage.ToString("F2"));
             }
 
             Console.WriteLine("└───────────────────────┴───────────────────┴───────────────────┴───────────────────┴───────────────────┴───────────────────┘");
